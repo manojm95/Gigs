@@ -1,0 +1,61 @@
+const assert = require('assert');
+const ganache = require('ganache-cli');
+const Web3 = require('web3');
+const provider = ganache.provider();
+const web3 = new Web3(provider);
+
+const compiledFactory = require('../Ethereum/build/FactoryGig.json');
+const compiledGig = require('../Ethereum/build/Gig.json');
+
+let accounts;
+let factory;
+let gigAddress;
+let gig;
+let category;
+
+const { interface, bytecode  } = compiledFactory;
+
+beforeEach(async () => {
+  accounts = await web3.eth.getAccounts();
+  console.log('11111',accounts[0]);
+ 
+  factory = await new web3.eth.Contract(JSON.parse(interface))
+    .deploy({ data: bytecode })
+    .send({ from: accounts[0], gas:'3000000' });
+console.log('22222');
+  await factory.methods.createGig('ceiling','ceiling','1000',4,factory.options.address).send({
+    from: accounts[0],
+    gas: '3000000'
+  });
+console.log('33333');
+
+  [gigAddress] = await factory.methods.getCatContracts('ceiling').call();
+  gig = await new web3.eth.Contract(
+    JSON.parse(compiledGig.interface),
+    gigAddress
+  );
+  
+  category = await gig.methods.category().call();
+factory.setProvider(provider);
+});
+
+describe('Gigs', () => {
+  it('deploys a factory and a gig', () => {
+    assert.ok(factory.options.address);
+    assert.ok(gig.options.address);
+  });
+  it('check the category', ()=> {
+    assert.equal(category,'ceiling');
+  });
+  
+  it('paymentRequest', async ()=> {
+    await gig.methods.placeQuote(1001)
+	   	.send({
+			from: accounts[1],
+			gas: '1000000'
+		})
+   [bidder] = await gig.method.bidders().call();
+   asser.equal()  
+  })	
+
+});
